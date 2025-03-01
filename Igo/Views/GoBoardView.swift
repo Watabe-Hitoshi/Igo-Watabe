@@ -16,6 +16,10 @@ struct GoBoardView: View {
     @Binding var currentPlayer: Int
     @Binding var koPosition: (Int, Int)?
     @Binding var passCount: Int  // パス回数
+    @Binding var showAlert: Bool
+    @Binding var alertMessage: String
+    @Binding var blackCaptured: Int
+    @Binding var whiteCaptured: Int
     
     var body: some View {
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
@@ -31,7 +35,7 @@ struct GoBoardView: View {
                                 .foregroundColor(.black)
                                 .padding(-2)
                             
-                            if row == 4 && col == 4 {
+                            if row == 4 && col == 4 { // 碁盤の中心の黒い点
                                 Circle()
                                     .foregroundStyle(Color.black)
                                     .frame(width: 15, height: 15)
@@ -45,9 +49,12 @@ struct GoBoardView: View {
                             if isLegalMove(row: row, col: col) {
                                 stones[row][col] = currentPlayer
                                 captureStones(row: row, col: col)
-                                koPosition = checkKo(row: row, col: col) ? (row, col) : nil
+                                //koPosition = checkKo(row: row, col: col) ? (row, col) : nil
                                 passCount = 0  // パス回数リセット
                                 currentPlayer = currentPlayer == 1 ? 2 : 1
+                            } else {
+                                alertMessage = "そこには打てません"
+                                showAlert = true
                             }
                         }
                     }
@@ -117,10 +124,11 @@ struct GoBoardView: View {
     }
     
     
-    struct Player {
-        let number: Int // 1: 黒, 2: 白
-        var gotStones: Int = 0
-    }
+//    struct Player {
+//        let number: Int // 1: 黒, 2: 白
+//        var gotStones: Int = 0
+//        
+//    }
     
     
     private func isLegalMove(row: Int, col: Int) -> Bool {
@@ -144,7 +152,12 @@ struct GoBoardView: View {
             let newCol = col + dir.1
             if newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize {
                 if stones[newRow][newCol] != 0 && !hasLiberty(row: newRow, col: newCol) {
-                    removeGroup(row: newRow, col: newCol)
+                    let capturedCount : Int = removeGroup(row: newRow, col: newCol)
+                    if currentPlayer == 1 {
+                        whiteCaptured += capturedCount
+                    } else {
+                        blackCaptured += capturedCount
+                    }
                 }
             }
         }
@@ -182,12 +195,13 @@ struct GoBoardView: View {
         return false
     }
     
-    private func removeGroup(row: Int, col: Int) {
+    private func removeGroup(row: Int, col: Int) -> Int {
         let player = stones[row][col]
-        if player == 0 { return }
+        if player == 0 { return 0}
         
         var visited = Set<[Int]>()
         var queue = [[row, col]]
+        var capturedCount = 0
         
         while !queue.isEmpty {
             let current = queue.removeFirst()
@@ -198,6 +212,7 @@ struct GoBoardView: View {
             }
             visited.insert([r, c])
             stones[r][c] = 0  // 石を削除
+            capturedCount += 1
             
             let directions = [(0,1), (1,0), (0,-1), (-1,0)]
             for dir in directions {
@@ -210,6 +225,7 @@ struct GoBoardView: View {
                 }
             }
         }
+        return capturedCount
     }
 }
 
