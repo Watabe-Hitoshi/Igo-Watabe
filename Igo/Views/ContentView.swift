@@ -11,7 +11,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                Text("囲碁対局プラットフォーム")
+                Text("囲碁アプリ")
                     .font(.largeTitle)
                     .bold()
                 
@@ -65,12 +65,14 @@ struct ContentView: View {
 }
 
 struct GameBoardView: View {
-    let boardSize = 19
-    let gridSpacing: CGFloat = 20
-    @State private var stones: [[Int]] = Array(repeating: Array(repeating: 0, count: 19), count: 19)
-    @State private var currentPlayer = 1
+    let boardSize = 9
+    let gridSpacing: CGFloat = 40
+    @State private var stones: [[Int]] = Array(repeating: Array(repeating: 0, count: 9), count: 9)
+    @State private var currentPlayer = 1 // 1が黒番
     @State private var koPosition: (Int, Int)? = nil
     @State private var passCount = 0
+    @State private var showingAlert = false
+    @State private var gameEnded = false // ゲーム終了を追跡する状態変数
     
     var body: some View {
         VStack {
@@ -79,26 +81,61 @@ struct GameBoardView: View {
                 .bold()
                 .padding()
             
-            ZStack {
-                Rectangle()
-                    .fill(Color.brown)
+            
+            Rectangle()
+                    //.fill(Color.brown)
                     .frame(width: gridSpacing * CGFloat(boardSize), height: gridSpacing * CGFloat(boardSize))
-                    .cornerRadius(10)
+                    //.cornerRadius(10)
                     .overlay(
-                        GridView(boardSize: boardSize, gridSpacing: gridSpacing, stones: $stones, currentPlayer: $currentPlayer, koPosition: $koPosition, passCount: $passCount)
+                        GoBoardView(boardSize: boardSize, gridSpacing: gridSpacing, stones: $stones, currentPlayer: $currentPlayer, koPosition: $koPosition, passCount: $passCount)
+                            .disabled(gameEnded) // ゲーム終了時には操作を無効にする
                     )
-            }
             .padding()
             
-            Button("パス") {
-                passTurn()
+            if passCount == 1 {
+                
+                Button("パス") {
+                    passTurn()
+                    showingAlert = true
+                }
+                .font(.title2)
+                .padding()
+                .background(Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .alert("パスしました", isPresented: $showingAlert) {
+                    Button("OK") {}
+                } message: {
+                    Text("\(currentPlayer == 1 ? "黒" : "白")の番です")
+                }
+            } else {
+                Button("パス") {
+                    passTurn()
+                    showingAlert = true
+                }
+                .font(.title2)
+                .padding()
+                .background(Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .disabled(gameEnded)
+                .alert("パスしました", isPresented: $showingAlert) {
+                    Button("OK") {
+                        endGame()
+                    }
+                } message: {
+                    Text("終局しました")
+                }
             }
-            .font(.title2)
-            .padding()
-            .background(Color.gray)
-            .foregroundColor(.white)
-            .cornerRadius(10)
             
+            
+            
+            
+            if currentPlayer == 1 {
+                Text("黒番です")
+            } else {
+                Text("白番です")
+            }
             Spacer()
         }
     }
@@ -115,6 +152,7 @@ struct GameBoardView: View {
         print("対局終了: 2回連続パス")
         let score = calculateScore()
         print("黒の地: \(score.blackScore), 白の地: \(score.whiteScore)")
+        gameEnded = true // ゲーム終了
     }
     
     private func calculateScore() -> (blackScore: Int, whiteScore: Int) {
