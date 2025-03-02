@@ -11,7 +11,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                Text("囲碁アプリ")
+                Text("碁神（GoGod）")
                     .font(.largeTitle)
                     .bold()
                 
