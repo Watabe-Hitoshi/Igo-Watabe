@@ -72,10 +72,11 @@ struct GameBoardView: View {
     @State private var koPosition: (Int, Int)? = nil
     @State private var passCount = 0
     @State private var showingAlert = false
+    @State private var showingResignAlert = false // 投了のアラートを表示する状態変数
     @State private var alertMessage = ""
     @State private var gameEnded = false // ゲーム終了を追跡する状態変数
-    @State private var blackCaptured = 0 //
-    @State private var whiteCaptured = 0 //
+    @State private var blackCaptured = 0 // 白番のアゲハマ
+    @State private var whiteCaptured = 0 // 黒番のアゲハマ
     
     var body: some View {
         VStack {
@@ -96,49 +97,68 @@ struct GameBoardView: View {
             .padding()
             
             HStack {
-                Text("黒番のアゲハマ: \(whiteCaptured)")
-                Text("白番のアゲハマ: \(blackCaptured)")
+                Text("黒のプレイヤー名")
+                Text("白のプレイヤー名")
             }
             .font(.title2)
             .padding()
+            HStack {
+                Text("黒番のアゲハマ: \(whiteCaptured)")
+                Text("白番のアゲハマ: \(blackCaptured)")
+            }
+//            .font(.title2)
+//            .padding()
             
-            if passCount == 1 {
-                
-                Button("パス") {
-                    passTurn()
-                    showingAlert = true
+            HStack {
+                if passCount == 1 {
+                    Button("パス") {
+                            showingAlert = true
+                            passTurn()
+                    }
+                    .font(.title2)
+                    .padding()
+                    .background(Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .alert("パスしました", isPresented: $showingAlert) {
+                        Button("OK") {}
+                    } message: {
+                        Text("\(currentPlayer == 1 ? "黒" : "白")の番です")
+                    }
+                } else {
+                    Button("パス") {
+                        showingAlert = true
+                        passTurn()
+//                        endGame()
+                    }
+                    .font(.title2)
+                    .padding()
+                    .background(Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .disabled(gameEnded)
+                    .alert("終局しました", isPresented: $showingAlert) {
+                        Button("OK") {
+                            //endGame()
+                        }
+                    } message: {
+                        Text("ここに結果を表示させたいです")
+                    }
                 }
-                .font(.title2)
-                .padding()
-                .background(Color.gray)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .alert("パスしました", isPresented: $showingAlert) {
-                    Button("OK") {}
-                } message: {
-                    Text("\(currentPlayer == 1 ? "黒" : "白")の番です")
-                }
-            } else {
-                Button("パス") {
-                    passTurn()
+                Button("投了") {
                     endGame()
-                    showingAlert = true
+                    showingResignAlert = true
                 }
                 .font(.title2)
                 .padding()
-                .background(Color.gray)
+                .background(Color.red)
                 .foregroundColor(.white)
                 .cornerRadius(10)
                 .disabled(gameEnded)
-                .alert("終局しました", isPresented: $showingAlert) {
-                    Button("OK") {
-                        //endGame()
-                    }
-                } message: {
-                    Text("ここに結果を表示させたいです")
+                .alert("\(currentPlayer == 1 ? "白" : "黒")の勝ちです", isPresented: $showingResignAlert) {
+                    Button("OK") {}
                 }
             }
-            
             
             
             
